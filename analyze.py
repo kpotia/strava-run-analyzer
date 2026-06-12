@@ -63,9 +63,9 @@ def main():
     strava_client_secret = os.environ.get('STRAVA_CLIENT_SECRET')
     strava_refresh_token = os.environ.get('STRAVA_REFRESH_TOKEN')
 
-    sendgrid_key = os.environ.get('SENDGRID_API_KEY')
-    email_to     = os.environ.get('EMAIL_TO')
-    email_from   = os.environ.get('EMAIL_FROM')
+    resend_key = os.environ.get('RESEND_API_KEY')
+    email_to    = os.environ.get('EMAIL_TO')
+    email_from  = os.environ.get('EMAIL_FROM')
 
     # Dashboard URL exposed by Vercel (used in email links and back-nav)
     dashboard_url = os.environ.get('DASHBOARD_URL', '')
@@ -87,7 +87,7 @@ def main():
     # ── 3. Initialise clients ──────────────────────────────────────────
     strava = StravaClient(strava_client_id, strava_client_secret, strava_refresh_token)
     site   = LocalSiteManager(output_dir, assets_dir)
-    email  = EmailSender(sendgrid_key, email_to, email_from) if email_to else None
+    email  = EmailSender(resend_key, email_to, email_from) if email_to else None
 
     # Copy stylesheet into output/assets/
     site.sync_assets()

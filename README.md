@@ -1,6 +1,6 @@
 # RunLens: Automated Strava Run Analysis Pipeline
 
-RunLens is a low-maintenance static reporting pipeline that automates fetching Strava runs, performing pacing and coaching analysis, generating interactive HTML reports, and sending notification emails via SendGrid.
+RunLens is a low-maintenance static reporting pipeline that automates fetching Strava runs, performing pacing and coaching analysis, generating interactive HTML reports, and sending notification emails via Resend.
 
 ---
 
@@ -17,7 +17,7 @@ RunLens is a low-maintenance static reporting pipeline that automates fetching S
                           |                          |           |
                           v                          v           v
                  +----------------------+    +----------------+  +---------+
-                 | Static Site Builder  |    |  SendGrid API  |  |  EMAIL  |
+                 | Static Site Builder  |    |  Resend API    |  |  EMAIL  |
                  |  (output/ + deploy)  |    |  (Notification) |  |  (You)  |
                  +----------------------+    +----------------+  +---------+
 ```
@@ -27,7 +27,7 @@ RunLens is a low-maintenance static reporting pipeline that automates fetching S
 3. **Pace Analysis Engine:** Reconstructs trackpoints and calculates distance, pacing, pause detection, split paces, and fatigue signals.
 4. **Static Report Generator:** Renders individual run HTML reports and a dashboard index with Jinja2 templates.
 5. **Deploy Branch Output:** Writes generated site assets to `output/` locally and commits them to the `deploy` branch for static hosting.
-6. **SendGrid Email Alert:** Sends coach-style summary emails with a link to the generated report.
+6. **Resend Email Alert:** Sends coach-style summary emails with a link to the generated report.
 
 ---
 
@@ -44,7 +44,7 @@ strava-run-analyzer/
 │   ├── analysis_engine.py     # Run metrics and pacing engine
 │   ├── report_generator.py    # Jinja2 rendering logic (HTML + chart data)
 │   ├── dashboard_generator.py # Local site output manager
-│   └── email_sender.py        # SendGrid email wrapper
+│   └── email_sender.py        # Resend email wrapper
 ├── templates/
 │   ├── report_template.html   # Report template
 │   └── dashboard_template.html # Dashboard template
@@ -98,11 +98,11 @@ This repository generates a static site into `output/` locally or `source/output
 - `DASHBOARD_URL` is used for absolute links in notification emails.
 - You can host the `deploy` branch with Vercel, GitHub Pages, or any branch-based static host.
 
-### 3. SendGrid API Setup
+### 3. Resend API Setup
 
-1. Sign up for a free account at [SendGrid](https://sendgrid.com).
-2. Complete **Single Sender Verification** or **Domain Authentication**.
-3. Create an API Key with **Mail Send** permissions.
+1. Sign up for a free account at [Resend](https://resend.com).
+2. Verify your sending domain or sender email address in the Resend dashboard.
+3. Create an API Key.
 4. Copy the API Key.
 
 ### 4. GitHub Secrets Configuration
@@ -114,7 +114,7 @@ Add the following secrets to your GitHub repository under **Settings -> Secrets 
 | `STRAVA_CLIENT_ID` | Your Strava app client ID | `12345` |
 | `STRAVA_CLIENT_SECRET` | Your Strava app client secret | `ab12cd...34ef` |
 | `STRAVA_REFRESH_TOKEN` | Strava refresh token | `xy78zw...90uv` |
-| `SENDGRID_API_KEY` | SendGrid Mail Send API Key | `SG.abcdef...` |
+| `RESEND_API_KEY` | Resend API Key | `re_abcdef...` |
 | `EMAIL_TO` | Target recipient email address | `athlete@example.com` |
 | `EMAIL_FROM` | Verified sender email address | `athlete@example.com` |
 | `DASHBOARD_URL` | Public site URL for report links | `https://your-site.example.com` |
