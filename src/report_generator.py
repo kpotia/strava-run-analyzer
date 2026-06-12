@@ -79,29 +79,30 @@ def render_run_report(activity, metrics, points, template_dir, output_path):
         heartrates_json=json.dumps(ds_heartrates)
     )
     
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    parent = os.path.dirname(output_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-        
-    print(f"Individual report generated at {output_path}")
 
-def render_dashboard(runs, stats, template_dir, output_path):
+    print(f"Report generated: {output_path}")
+
+def render_dashboard(runs, stats, template_dir) -> str:
     """
     Renders the Jinja2 HTML dashboard template listing all runs.
-    Saves the output to the specified path.
+
+    Returns the rendered HTML string. The caller is responsible for
+    writing it to disk (e.g. via LocalSiteManager.save_index).
     """
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template('dashboard_template.html')
-    
+
     html_content = template.render(
         runs=runs,
         stats=stats,
         format_pace=format_pace,
-        format_time=format_time
+        format_time=format_time,
     )
-    
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
-        
-    print(f"Dashboard index generated at {output_path}")
+
+    print("Dashboard HTML rendered.")
+    return html_content

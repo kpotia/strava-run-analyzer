@@ -5,32 +5,77 @@ on:
     - cron: '0 9 * * *'  # Daily at 9 AM UTC
   workflow_dispatch:       # Allows manual trigger in the GitHub UI
 
+# Allow the runner to push to the deploy branch
+permissions:
+  contents: write
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      # ── 1. Checkout source code (main branch) ──────────────────────────
+      - name: Checkout source (main)
         uses: actions/checkout@v4
+        with:
+          path: source
 
+      # ── 2. Checkout deploy branch into source/output/ ──────────────────
+      #    If the deploy branch does not exist yet this step creates it
+      #    as an orphan so the first push initialises it cleanly.
+      - name: Checkout or initialise deploy branch
+        run: |
+          cd source
+          git fetch origin deploy 2>/dev/null || true
+          if git rev-parse --verify origin/deploy > /dev/null 2>&1; then
+            git worktree add output origin/deploy
+            echo "deploy branch checked out into output/"
+          else
+            echo "deploy branch does not exist — creating orphan worktree"
+            git worktree add --orphan -b deploy output
+          fi
+
+      # ── 3. Python setup ────────────────────────────────────────────────
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip' # Cache pip dependencies for faster runs
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: source/requirements.txt
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r source/requirements.txt
 
+      # ── 4. Run the analysis pipeline ───────────────────────────────────
       - name: Run Analysis Pipeline
         env:
           STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
           STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
           STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
-          GCS_SERVICE_ACCOUNT_KEY: ${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-        run: python analyze.py
+          DASHBOARD_URL: ${{ secrets.DASHBOARD_URL }}
+          # Paths are resolved relative to the checked-out source directory
+          OUTPUT_DIR: ${{ github.workspace }}/source/output
+        run: |
+          cd source
+          python analyze.py
+
+      # ── 5. Commit & push generated site to the deploy branch ───────────
+      - name: Commit and push to deploy branch
+        run: |
+          cd source/output
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          # Exit cleanly if nothing changed (no new runs processed)
+          if git diff --cached --quiet; then
+            echo "No changes to deploy — site is already up to date."
+            exit 0
+          fi
+          COMMIT_MSG="chore(deploy): update reports $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git commit -m "$COMMIT_MSG"
+          git push origin HEAD:deploy
+          echo "Deploy branch updated and pushed."

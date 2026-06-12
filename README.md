@@ -1,6 +1,6 @@
 # RunLens: Automated Strava Run Analysis Pipeline
 
-RunLens is a low-maintenance, zero-infrastructure, cost-effective run analysis pipeline. It automates the process of fetching your runs from Strava, conducting deep pacing and coaching analysis, uploading interactive visual reports to Google Cloud Storage (GCS), and notifying you via SendGrid email alerts.
+RunLens is a low-maintenance static reporting pipeline that automates fetching Strava runs, performing pacing and coaching analysis, generating interactive HTML reports, and sending notification emails via SendGrid.
 
 ---
 
@@ -16,20 +16,18 @@ RunLens is a low-maintenance, zero-infrastructure, cost-effective run analysis p
                           +--------------------------+-----------+
                           |                          |           |
                           v                          v           v
-                 +---------------+          +---------------+  +---------+
-                 | GOOGLE CLOUD  |          |  SENDGRID API |  |  EMAIL  |
-                 | STORAGE       |          |  (Email send) |  |  (You)  |
-                 | (Reports +    |          |               |  +---------+
-                 |  Static Site) |          +---------------+
-                 +---------------+
+                 +----------------------+    +----------------+  +---------+
+                 | Static Site Builder  |    |  SendGrid API  |  |  EMAIL  |
+                 |  (output/ + deploy)  |    |  (Notification) |  |  (You)  |
+                 +----------------------+    +----------------+  +---------+
 ```
 
-1. **GitHub Actions Scheduler:** A cron job runs daily (or is manually triggered).
-2. **Strava Streams Fetcher:** Refreshes OAuth credentials, queries recent athlete activities, identifies new run sessions, and downloads time-series streams (latitude/longitude, heart rate, cadence, speed, elevation).
-3. **Pace Analysis Engine:** Performs haversine calculations, segment pause/break checks, split calculations, half-split negative/positive delta calculations, and fatigue onset detection.
-4. **Static Report Generator:** Generates responsive HTML reports with interactive Chart.js graphs and updates the central training index page.
-5. **GCS Uploader:** Interacts with Google Cloud Storage to upload reports, styles, and the updated metadata database.
-6. **SendGrid Email Alert:** Dispatches a structured summary email to the athlete with coach feedback and a link to the GCS dashboard.
+1. **GitHub Actions Scheduler:** A cron trigger or manual dispatch runs the pipeline.
+2. **Strava Streams Fetcher:** Refreshes OAuth tokens, queries recent activities, and downloads streams (`latlng`, `time`, `altitude`, `heartrate`, `cadence`, `velocity_smooth`).
+3. **Pace Analysis Engine:** Reconstructs trackpoints and calculates distance, pacing, pause detection, split paces, and fatigue signals.
+4. **Static Report Generator:** Renders individual run HTML reports and a dashboard index with Jinja2 templates.
+5. **Deploy Branch Output:** Writes generated site assets to `output/` locally and commits them to the `deploy` branch for static hosting.
+6. **SendGrid Email Alert:** Sends coach-style summary emails with a link to the generated report.
 
 ---
 
@@ -43,18 +41,18 @@ strava-run-analyzer/
 ├── src/
 │   ├── __init__.py
 │   ├── strava_client.py       # Strava OAuth + Streams API wrapper
-│   ├── analysis_engine.py     # Ported calculations & coach generator
-│   ├── report_generator.py    # Jinja2 rendering logic (HTML + Chart.js)
-│   ├── gcs_uploader.py        # GCP client wrapper
-│   └── email_sender.py        # SendGrid wrapper
+│   ├── analysis_engine.py     # Run metrics and pacing engine
+│   ├── report_generator.py    # Jinja2 rendering logic (HTML + chart data)
+│   ├── dashboard_generator.py # Local site output manager
+│   └── email_sender.py        # SendGrid email wrapper
 ├── templates/
 │   ├── report_template.html   # Report template
-│   └── dashboard_template.html# Index page template
+│   └── dashboard_template.html # Dashboard template
 ├── assets/
-│   └── style.css              # Premium glassmorphic stylesheet
+│   └── style.css              # Shared stylesheet
 ├── requirements.txt           # Pip dependencies
 ├── analyze.py                 # Main orchestration entry point
-├── mock_run.py                # Local verification runner (mocks APIs)
+├── mock_run.py                # Local mock pipeline simulation
 └── README.md                  # Documentation
 ```
 
@@ -88,28 +86,22 @@ Since Strava does not expose a simple GPX download endpoint, this pipeline uses 
    ```
 7. Note down the **`refresh_token`** in the JSON response. This token is persistent and handles subsequent access token requests automatically.
 
-### 2. Google Cloud Storage Bucket Setup
+### 2. Static Site Deployment
 
-1. In the GCP Console, create a new Cloud Storage bucket (e.g. `your-run-bucket`).
-2. Set access control to **Uniform** (recommended) or **Fine-grained**.
-3. (Optional) Make the bucket a static website by making objects public:
-   - Go to IAM & Admin -> Service Accounts and create a service account with **Storage Object Admin** role.
-   - Download the service account JSON key, and encode it in base64:
-     - Windows PowerShell:
-       ```powershell
-       [Convert]::ToBase64String([System.IO.File]::ReadAllBytes("path/to/key.json"))
-       ```
-     - Linux/macOS:
-       ```bash
-       base64 -i path/to/key.json
-       ```
-4. If your bucket permits public access, the dashboard and reports will be accessible at:
-   `https://storage.googleapis.com/[BUCKET_NAME]/index.html`
+This repository generates a static site into `output/` locally or `source/output/` in GitHub Actions. The workflow in `.github/workflows/analyze-run.yml` commits generated reports, the dashboard, and run history to the `deploy` branch.
+
+- The generated static site includes:
+  - `index.html` dashboard
+  - `assets/style.css`
+  - `data/runs.json`
+  - `reports/*.html`
+- `DASHBOARD_URL` is used for absolute links in notification emails.
+- You can host the `deploy` branch with Vercel, GitHub Pages, or any branch-based static host.
 
 ### 3. SendGrid API Setup
 
 1. Sign up for a free account at [SendGrid](https://sendgrid.com).
-2. Complete **Single Sender Verification** or **Domain Authentication** (required for email delivery).
+2. Complete **Single Sender Verification** or **Domain Authentication**.
 3. Create an API Key with **Mail Send** permissions.
 4. Copy the API Key.
 
@@ -121,18 +113,17 @@ Add the following secrets to your GitHub repository under **Settings -> Secrets 
 | :--- | :--- | :--- |
 | `STRAVA_CLIENT_ID` | Your Strava app client ID | `12345` |
 | `STRAVA_CLIENT_SECRET` | Your Strava app client secret | `ab12cd...34ef` |
-| `STRAVA_REFRESH_TOKEN` | One-time OAuth refresh token | `xy78zw...90uv` |
+| `STRAVA_REFRESH_TOKEN` | Strava refresh token | `xy78zw...90uv` |
 | `SENDGRID_API_KEY` | SendGrid Mail Send API Key | `SG.abcdef...` |
-| `GCS_BUCKET_NAME` | GCS target bucket name | `my-strava-run-bucket` |
-| `GCS_SERVICE_ACCOUNT_KEY` | Base64-encoded GCP service account JSON key | `eyJhY2N...` |
 | `EMAIL_TO` | Target recipient email address | `athlete@example.com` |
-| `EMAIL_FROM` | Verified SendGrid sender email address | `athlete@example.com` |
+| `EMAIL_FROM` | Verified sender email address | `athlete@example.com` |
+| `DASHBOARD_URL` | Public site URL for report links | `https://your-site.example.com` |
 
 ---
 
 ## 🧪 Local Testing & Simulation
 
-Before configuring secrets on GitHub, you can verify that the pacing engine, HTML templates, Chart.js, and email formats render correctly using mock data:
+Before configuring secrets on GitHub, you can verify the pacing engine, HTML templates, chart generation, and email formats using mock data:
 
 1. Navigate to the project directory:
    ```bash
@@ -146,6 +137,6 @@ Before configuring secrets on GitHub, you can verify that the pacing engine, HTM
    ```bash
    python mock_run.py
    ```
-4. Examine the generated dashboard, run reports, and email notifications in the new `mock_gcs` directory:
-   - Open `mock_gcs/index.html` in your browser.
-   - Open `mock_gcs/email_preview.html` to preview the notification style.
+4. Examine the generated dashboard, run reports, and email preview in `mock_output/`:
+   - Open `mock_output/index.html` in your browser.
+   - Open `mock_output/email_preview.html` to preview the notification style.
