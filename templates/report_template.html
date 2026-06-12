@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Analysis — {{ activity.name }}</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">R</div>
+        <div>
+          <h1 class="brand-name">RunLens</h1>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Strava Run Analysis Pipeline</span>
+        </div>
+      </div>
+      <a href="../index.html" class="nav-link">← Dashboard</a>
+    </header>
+
+    <main>
+      <div style="margin-bottom: 2.5rem;">
+        <span class="badge badge-info" style="margin-bottom: 0.5rem;">Activity Analysis</span>
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.25rem;">{{ activity.name }}</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+          📅 {{ activity.start_date_local_formatted }} | Start Time: {{ activity.start_time_local }}
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="card primary">
+          <div class="card-label">Distance</div>
+          <div class="card-value">{{ metrics.total_distance_km | round(2) }} <span style="font-size: 1rem;">km</span></div>
+          <div class="card-subtext">Total track distance</div>
+        </div>
+        <div class="card pace">
+          <div class="card-label">Avg Pace</div>
+          <div class="card-value">{{ format_pace(metrics.avg_pace_min_km) }} <span style="font-size: 1rem;">/km</span></div>
+          <div class="card-subtext">Moving average pace</div>
+        </div>
+        <div class="card elevation">
+          <div class="card-label">Elevation Gain</div>
+          <div class="card-value">{{ metrics.total_elevation_gain_m | round(0) }} <span style="font-size: 1rem;">m</span></div>
+          <div class="card-subtext">Loss: {{ metrics.total_elevation_loss_m | round(0) }} m</div>
+        </div>
+        {% if metrics.avg_heartrate %}
+        <div class="card hr">
+          <div class="card-label">Heart Rate</div>
+          <div class="card-value">{{ metrics.avg_heartrate | round(0) }} <span style="font-size: 1rem;">bpm</span></div>
+          <div class="card-subtext">Max: {{ metrics.max_heartrate | round(0) }} bpm</div>
+        </div>
+        {% else %}
+        <div class="card hr">
+          <div class="card-label">Moving Time</div>
+          <div class="card-value">{{ format_time(metrics.moving_time_seconds) }}</div>
+          <div class="card-subtext">Elapsed: {{ format_time(metrics.elapsed_time_seconds) }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Layout Grid -->
+      <div class="layout-grid">
+        
+        <!-- Left Column: Charts and Splits -->
+        <div class="main-section">
+          
+          <!-- Charts Box -->
+          <div class="card">
+            <h3 class="section-title">Pace & Elevation Profile</h3>
+            <div class="chart-container">
+              <canvas id="runChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Splits Box -->
+          <div class="card">
+            <h3 class="section-title">Per-Kilometer Splits</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>KM</th>
+                    <th>Distance</th>
+                    <th>Split Time</th>
+                    <th>Pace</th>
+                    <th>Elevation Gain/Loss</th>
+                    {% if metrics.avg_heartrate %}<th>Avg HR</th>{% endif %}
+                    {% if metrics.avg_cadence %}<th>Avg Cadence</th>{% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for split in metrics.splits %}
+                  <tr class="{% if split.partial %}partial-split{% endif %}">
+                    <td>{{ split.km }}</td>
+                    <td>{{ split.distance_m | round(0) }} m</td>
+                    <td>{{ format_time(split.time_seconds) }}</td>
+                    <td style="font-weight: 600;">{{ format_pace(split.pace_min_km) }} /km</td>
+                    <td>+{{ split.elevation_gain_m | round(0) }}m / -{{ split.elevation_loss_m | round(0) }}m</td>
+                    {% if metrics.avg_heartrate %}<td>{{ split.avg_heartrate | round(0) if split.avg_heartrate else 'N/A' }} bpm</td>{% endif %}
+                    {% if metrics.avg_cadence %}<td>{{ split.avg_cadence | round(0) if split.avg_cadence else 'N/A' }} spm</td>{% endif %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pause Analysis Box (If pauses exist) -->
+          {% if metrics.break_count > 0 %}
+          <div class="card">
+            <h3 class="section-title">Pause & Break Analysis</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+              The run was interrupted by <strong>{{ metrics.break_count }} break(s)</strong> totaling <strong>{{ format_time(metrics.pause_time_seconds) }}</strong>.
+            </p>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Segment</th>
+                    <th>Distance</th>
+                    <th>Duration</th>
+                    <th>Pace</th>
+                    <th>Elevation Gain/Loss</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for seg in metrics.break_analysis.segments %}
+                  <tr>
+                    <td>Segment {{ loop.index }}</td>
+                    <td>{{ seg.distance_km }} km</td>
+                    <td>{{ format_time(seg.moving_time_seconds) }}</td>
+                    <td>{{ format_pace(seg.avg_pace_min_km) }} /km</td>
+                    <td>+{{ seg.elevation_gain_m | round(1) }}m / -{{ seg.elevation_loss_m | round(1) }}m</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <!-- Right Column: Coaching and Details -->
+        <div class="sidebar">
+          
+          <!-- Coaching Notes Box -->
+          <div class="card coaching-box">
+            <h3 class="section-title coaching-title">Coach Notes</h3>
+            <ul class="coaching-list" style="margin-top: 1rem;">
+              {% if metrics.pause_count > 0 %}
+              <li>{{ metrics.pause_count }} pause(s) detected — try to run continuously to build maximum aerobic endurance.</li>
+              {% endif %}
+              
+              {% if metrics.negative_split %}
+              <li>Excellent negative split! You finished the second half of the run stronger than the first half, showing smart energy management.</li>
+              {% elif metrics.split_delta_seconds and metrics.split_delta_seconds > 60 %}
+              <li>Significant fade in the second half (+{{ metrics.split_delta_seconds | round(0) }}s difference). Focus on keeping your early kilometers controlled and disciplined.</li>
+              {% else %}
+              <li>Consistent pacing strategy. Even-split runs are highly efficient for endurance events.</li>
+              {% endif %}
+
+              {% if metrics.fatigue_onset_km %}
+              <li>Fatigue onset detected at KM {{ metrics.fatigue_onset_km }}. Your pace dropped by +{{ format_pace(metrics.fatigue_pace_drop) }} /km above average. Work on your base-building long runs.</li>
+              {% endif %}
+
+              {% if metrics.avg_pace_min_km and metrics.avg_pace_min_km < 5.0 %}
+              <li>This was a very fast run (avg pace {{ format_pace(metrics.avg_pace_min_km) }} /km). Prioritize recovery and sleep before your next workout.</li>
+              {% endif %}
+
+              {% if metrics.pause_count == 0 and not metrics.fatigue_onset_km and not metrics.negative_split %}
+              <li>Solid, steady run. Consistency is the foundation of aerobic fitness. Keep up the good work!</li>
+              {% endif %}
+            </ul>
+          </div>
+
+          <!-- Pacing Profile Box -->
+          <div class="card">
+            <h3 class="section-title">Pacing Profile</h3>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <div class="card-subtext">Pacing Pattern</div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: #a5b4fc; margin-top: 0.25rem;">
+                  {{ metrics.pacing_pattern }}
+                </div>
+              </div>
+              {% if metrics.first_half_pace %}
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+                <div>
+                  <div class="card-subtext">1st Half Pace</div>
+                  <div style="font-weight: 600;">{{ format_pace(metrics.first_half_pace) }} /km</div>
+                </div>
+                <div>
+                  <div class="card-subtext">2nd Half Pace</div>
+                  <div style="font-weight: 600;">{{ format_pace(metrics.second_half_pace) }} /km</div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Highlights Box -->
+          <div class="card">
+            <h3 class="section-title">Highlights</h3>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              {% if metrics.fastest_split_km %}
+              <div>
+                <div class="card-subtext" style="color: var(--color-success);">🚀 Fastest Split</div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-top: 0.25rem;">
+                  KM {{ metrics.fastest_split_km.km }} <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-secondary);">@ {{ format_pace(metrics.fastest_split_km.pace_min_km) }} /km</span>
+                </div>
+              </div>
+              {% endif %}
+              {% if metrics.slowest_split_km %}
+              <div style="border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+                <div class="card-subtext" style="color: var(--color-warning);">🐢 Slowest Split</div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-top: 0.25rem;">
+                  KM {{ metrics.slowest_split_km.km }} <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-secondary);">@ {{ format_pace(metrics.slowest_split_km.pace_min_km) }} /km</span>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <footer>
+      <p>Generated by RunLens Pipeline. Powering athletic insights without infrastructure. <a href="https://github.com">GitHub Repository</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // Injected time-series data
+    const distances = {{ distances_json | safe }};
+    const elevations = {{ elevations_json | safe }};
+    const paces = {{ paces_json | safe }};
+    const heartrates = {{ heartrates_json | safe }};
+
+    const ctx = document.getElementById('runChart').getContext('2d');
+    
+    const datasets = [
+      {
+        label: 'Elevation (m)',
+        data: elevations,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        fill: true,
+        yAxisID: 'yElevation',
+        tension: 0.3,
+        pointRadius: 0
+      },
+      {
+        label: 'Pace (min/km)',
+        data: paces,
+        borderColor: '#f59e0b',
+        yAxisID: 'yPace',
+        tension: 0.4,
+        pointRadius: 0
+      }
+    ];
+
+    if (heartrates && heartrates.length > 0) {
+      datasets.push({
+        label: 'Heart Rate (bpm)',
+        data: heartrates,
+        borderColor: '#ec4899',
+        yAxisID: 'yHR',
+        tension: 0.3,
+        pointRadius: 0
+      });
+    }
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: distances,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Distance (km)',
+              color: '#94a3b8'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          },
+          yElevation: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Elevation (m)',
+              color: '#10b981'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          },
+          yPace: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            reverse: true, // Pace scale is inverted (lower pace = faster)
+            title: {
+              display: true,
+              text: 'Pace (min/km)',
+              color: '#f59e0b'
+            },
+            grid: {
+              drawOnChartArea: false // Only show grid for left axis
+            },
+            ticks: {
+              color: '#94a3b8',
+              callback: function(value) {
+                const mins = Math.floor(value);
+                const secs = Math.round((value - mins) * 60);
+                return mins + ':' + (secs < 10 ? '0' : '') + secs;
+              }
+            }
+          },
+          ...(heartrates && heartrates.length > 0 ? {
+            yHR: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Heart Rate (bpm)',
+                color: '#ec4899'
+              },
+              grid: {
+                drawOnChartArea: false
+              },
+              ticks: {
+                color: '#94a3b8'
+              }
+            }
+          } : {})
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#f8fafc',
+              font: {
+                family: 'Plus Jakarta Sans'
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.dataset.yAxisID === 'yPace') {
+                  const mins = Math.floor(context.parsed.y);
+                  const secs = Math.round((context.parsed.y - mins) * 60);
+                  label += mins + ':' + (secs < 10 ? '0' : '') + secs + ' /km';
+                } else {
+                  label += Math.round(context.parsed.y * 10) / 10;
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

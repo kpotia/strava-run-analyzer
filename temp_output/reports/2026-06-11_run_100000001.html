@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Analysis — Tempo Session along the Seine</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">R</div>
+        <div>
+          <h1 class="brand-name">RunLens</h1>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Strava Run Analysis Pipeline</span>
+        </div>
+      </div>
+      <a href="../index.html" class="nav-link">← Dashboard</a>
+    </header>
+
+    <main>
+      <div style="margin-bottom: 2.5rem;">
+        <span class="badge badge-info" style="margin-bottom: 0.5rem;">Activity Analysis</span>
+        <h2 style="font-size: 2.2rem; margin-bottom: 0.25rem;">Tempo Session along the Seine</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+          📅 June 11, 2026 | Start Time: 08:30:00
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="card primary">
+          <div class="card-label">Distance</div>
+          <div class="card-value">6.24 <span style="font-size: 1rem;">km</span></div>
+          <div class="card-subtext">Total track distance</div>
+        </div>
+        <div class="card pace">
+          <div class="card-label">Avg Pace</div>
+          <div class="card-value">4:00 <span style="font-size: 1rem;">/km</span></div>
+          <div class="card-subtext">Moving average pace</div>
+        </div>
+        <div class="card elevation">
+          <div class="card-label">Elevation Gain</div>
+          <div class="card-value">64.0 <span style="font-size: 1rem;">m</span></div>
+          <div class="card-subtext">Loss: 55.0 m</div>
+        </div>
+        
+        <div class="card hr">
+          <div class="card-label">Heart Rate</div>
+          <div class="card-value">138.0 <span style="font-size: 1rem;">bpm</span></div>
+          <div class="card-subtext">Max: 180 bpm</div>
+        </div>
+        
+      </div>
+
+      <!-- Layout Grid -->
+      <div class="layout-grid">
+        
+        <!-- Left Column: Charts and Splits -->
+        <div class="main-section">
+          
+          <!-- Charts Box -->
+          <div class="card">
+            <h3 class="section-title">Pace & Elevation Profile</h3>
+            <div class="chart-container">
+              <canvas id="runChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Splits Box -->
+          <div class="card">
+            <h3 class="section-title">Per-Kilometer Splits</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>KM</th>
+                    <th>Distance</th>
+                    <th>Split Time</th>
+                    <th>Pace</th>
+                    <th>Elevation Gain/Loss</th>
+                    <th>Avg HR</th>
+                    <th>Avg Cadence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                  <tr class="">
+                    <td>1</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+16.0m / -1.0m</td>
+                    <td>117.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="">
+                    <td>2</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+0.0m / -24.0m</td>
+                    <td>140.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="">
+                    <td>3</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+13.0m / -3.0m</td>
+                    <td>140.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="">
+                    <td>4</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+20.0m / -0.0m</td>
+                    <td>141.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="">
+                    <td>5</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+0.0m / -23.0m</td>
+                    <td>141.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="">
+                    <td>6</td>
+                    <td>1012.0 m</td>
+                    <td>04:03</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+10.0m / -5.0m</td>
+                    <td>146.0 bpm</td>
+                    <td>88.0 spm</td>
+                  </tr>
+                  
+                  <tr class="partial-split">
+                    <td>7</td>
+                    <td>162.0 m</td>
+                    <td>00:39</td>
+                    <td style="font-weight: 600;">4:00 /km</td>
+                    <td>+5.0m / -0.0m</td>
+                    <td>175.0 bpm</td>
+                    <td>89.0 spm</td>
+                  </tr>
+                  
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pause Analysis Box (If pauses exist) -->
+          
+
+        </div>
+
+        <!-- Right Column: Coaching and Details -->
+        <div class="sidebar">
+          
+          <!-- Coaching Notes Box -->
+          <div class="card coaching-box">
+            <h3 class="section-title coaching-title">Coach Notes</h3>
+            <ul class="coaching-list" style="margin-top: 1rem;">
+              
+              
+              
+              <li>Consistent pacing strategy. Even-split runs are highly efficient for endurance events.</li>
+              
+
+              
+
+              
+              <li>This was a very fast run (avg pace 4:00 /km). Prioritize recovery and sleep before your next workout.</li>
+              
+
+              
+              <li>Solid, steady run. Consistency is the foundation of aerobic fitness. Keep up the good work!</li>
+              
+            </ul>
+          </div>
+
+          <!-- Pacing Profile Box -->
+          <div class="card">
+            <h3 class="section-title">Pacing Profile</h3>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <div class="card-subtext">Pacing Pattern</div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: #a5b4fc; margin-top: 0.25rem;">
+                  Even Pacing
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+                <div>
+                  <div class="card-subtext">1st Half Pace</div>
+                  <div style="font-weight: 600;">4:00 /km</div>
+                </div>
+                <div>
+                  <div class="card-subtext">2nd Half Pace</div>
+                  <div style="font-weight: 600;">4:00 /km</div>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+
+          <!-- Highlights Box -->
+          <div class="card">
+            <h3 class="section-title">Highlights</h3>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+              
+              <div>
+                <div class="card-subtext" style="color: var(--color-success);">🚀 Fastest Split</div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-top: 0.25rem;">
+                  KM 1 <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-secondary);">@ 4:00 /km</span>
+                </div>
+              </div>
+              
+              
+              <div style="border-top: 1px solid var(--card-border); padding-top: 0.75rem;">
+                <div class="card-subtext" style="color: var(--color-warning);">🐢 Slowest Split</div>
+                <div style="font-weight: 700; font-size: 1.1rem; margin-top: 0.25rem;">
+                  KM 1 <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-secondary);">@ 4:00 /km</span>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <footer>
+      <p>Generated by RunLens Pipeline. Powering athletic insights without infrastructure. <a href="https://github.com">GitHub Repository</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // Injected time-series data
+    const distances = [0.0, 0.012, 0.037, 0.062, 0.075, 0.1, 0.125, 0.137, 0.162, 0.187, 0.2, 0.225, 0.25, 0.262, 0.287, 0.312, 0.325, 0.35, 0.375, 0.387, 0.412, 0.437, 0.45, 0.475, 0.5, 0.512, 0.537, 0.562, 0.575, 0.6, 0.625, 0.637, 0.662, 0.687, 0.7, 0.725, 0.75, 0.762, 0.787, 0.812, 0.825, 0.85, 0.875, 0.887, 0.912, 0.937, 0.95, 0.975, 1.0, 1.012, 1.037, 1.062, 1.075, 1.1, 1.125, 1.137, 1.162, 1.187, 1.2, 1.225, 1.25, 1.262, 1.287, 1.312, 1.325, 1.35, 1.375, 1.387, 1.412, 1.437, 1.45, 1.475, 1.5, 1.512, 1.537, 1.562, 1.575, 1.6, 1.625, 1.637, 1.662, 1.687, 1.7, 1.725, 1.75, 1.762, 1.787, 1.812, 1.825, 1.85, 1.875, 1.887, 1.912, 1.937, 1.95, 1.975, 2.0, 2.012, 2.037, 2.062, 2.075, 2.1, 2.125, 2.137, 2.162, 2.187, 2.2, 2.225, 2.25, 2.262, 2.287, 2.312, 2.325, 2.35, 2.375, 2.387, 2.412, 2.437, 2.45, 2.475, 2.5, 2.512, 2.537, 2.562, 2.575, 2.6, 2.625, 2.637, 2.662, 2.687, 2.699, 2.724, 2.749, 2.762, 2.787, 2.812, 2.824, 2.849, 2.874, 2.887, 2.912, 2.937, 2.949, 2.974, 2.999, 3.012, 3.037, 3.062, 3.074, 3.099, 3.124, 3.137, 3.162, 3.187, 3.199, 3.224, 3.249, 3.262, 3.287, 3.312, 3.324, 3.349, 3.374, 3.387, 3.412, 3.437, 3.449, 3.474, 3.499, 3.512, 3.537, 3.562, 3.574, 3.599, 3.624, 3.637, 3.662, 3.687, 3.699, 3.724, 3.749, 3.762, 3.787, 3.812, 3.824, 3.849, 3.874, 3.887, 3.912, 3.937, 3.949, 3.974, 3.999, 4.012, 4.037, 4.062, 4.074, 4.099, 4.124, 4.137, 4.162, 4.187, 4.199, 4.224, 4.249, 4.261, 4.286, 4.311, 4.324, 4.349, 4.374, 4.386, 4.411, 4.436, 4.449, 4.474, 4.499, 4.511, 4.536, 4.561, 4.574, 4.599, 4.624, 4.636, 4.661, 4.686, 4.699, 4.724, 4.749, 4.761, 4.786, 4.811, 4.824, 4.849, 4.874, 4.886, 4.911, 4.936, 4.949, 4.974, 4.999, 5.011, 5.036, 5.061, 5.074, 5.099, 5.124, 5.136, 5.161, 5.186, 5.199, 5.224, 5.249, 5.261, 5.286, 5.311, 5.324, 5.349, 5.374, 5.386, 5.411, 5.436, 5.448, 5.473, 5.498, 5.511, 5.536, 5.561, 5.573, 5.598, 5.623, 5.636, 5.661, 5.686, 5.698, 5.723, 5.748, 5.761, 5.786, 5.811, 5.823, 5.848, 5.873, 5.886, 5.911, 5.936, 5.948, 5.973, 5.998, 6.011, 6.036, 6.061, 6.073, 6.098, 6.123, 6.136, 6.161, 6.186, 6.198, 6.223];
+    const elevations = [35.0, 35.4, 36.2, 37.0, 37.4, 38.1, 38.9, 39.3, 40.0, 40.8, 41.2, 41.9, 42.6, 42.9, 43.6, 44.3, 44.6, 45.2, 45.8, 46.1, 46.7, 47.2, 47.5, 48.0, 48.4, 48.6, 49.1, 49.4, 49.6, 49.9, 50.2, 50.4, 50.6, 50.8, 50.9, 51.1, 51.2, 51.2, 51.3, 51.3, 51.3, 51.2, 51.2, 51.1, 51.0, 50.8, 50.7, 50.5, 50.2, 50.1, 49.8, 49.5, 49.3, 48.9, 48.5, 48.3, 47.8, 47.3, 47.1, 46.5, 46.0, 45.7, 45.1, 44.5, 44.2, 43.6, 42.9, 42.6, 41.9, 41.3, 40.9, 40.2, 39.5, 39.2, 38.5, 37.7, 37.4, 36.7, 36.0, 35.6, 34.9, 34.2, 33.9, 33.2, 32.5, 32.2, 31.6, 30.9, 30.6, 30.0, 29.4, 29.1, 28.6, 28.1, 27.8, 27.3, 26.8, 26.6, 26.2, 25.8, 25.6, 25.3, 25.0, 24.8, 24.6, 24.3, 24.2, 24.1, 23.9, 23.9, 23.8, 23.8, 23.7, 23.8, 23.8, 23.8, 24.0, 24.1, 24.2, 24.4, 24.6, 24.7, 25.0, 25.4, 25.5, 25.9, 26.3, 26.5, 27.0, 27.5, 27.7, 28.3, 28.8, 29.1, 29.7, 30.3, 30.6, 31.3, 32.0, 32.3, 33.0, 33.7, 34.1, 34.9, 35.6, 36.0, 36.8, 37.5, 37.9, 38.7, 39.5, 39.9, 40.7, 41.5, 41.9, 42.7, 43.4, 43.8, 44.6, 45.3, 45.7, 46.4, 47.2, 47.5, 48.2, 48.9, 49.2, 49.8, 50.5, 50.8, 51.3, 51.9, 52.2, 52.7, 53.1, 53.4, 53.8, 54.2, 54.4, 54.8, 55.1, 55.2, 55.5, 55.7, 55.8, 56.0, 56.1, 56.2, 56.3, 56.3, 56.3, 56.3, 56.2, 56.2, 56.1, 56.0, 55.9, 55.7, 55.4, 55.3, 55.0, 54.7, 54.5, 54.2, 53.8, 53.6, 53.1, 52.7, 52.4, 51.9, 51.4, 51.1, 50.5, 49.9, 49.6, 49.0, 48.4, 48.1, 47.4, 46.7, 46.4, 45.7, 45.0, 44.7, 44.0, 43.2, 42.9, 42.2, 41.5, 41.1, 40.4, 39.7, 39.4, 38.7, 38.0, 37.7, 37.0, 36.4, 36.1, 35.4, 34.8, 34.5, 34.0, 33.4, 33.2, 32.7, 32.2, 31.9, 31.5, 31.1, 30.9, 30.5, 30.2, 30.1, 29.8, 29.5, 29.4, 29.2, 29.1, 29.0, 28.9, 28.8, 28.8, 28.8, 28.8, 28.8, 28.9, 29.0, 29.1, 29.3, 29.5, 29.6, 29.9, 30.2, 30.3, 30.7, 31.1, 31.3, 31.7, 32.2, 32.4, 32.9, 33.5, 33.8, 34.3, 34.9, 35.2, 35.9, 36.6, 36.9, 37.6, 38.3, 38.7, 39.4, 40.1, 40.5, 41.3, 42.0, 42.4, 43.2];
+    const paces = [5.95, 5.94, 5.92, 5.9, 5.89, 5.87, 5.85, 5.84, 5.82, 5.8, 5.79, 5.77, 5.75, 5.74, 5.72, 5.7, 5.69, 5.67, 5.65, 5.64, 5.62, 5.6, 5.59, 5.57, 5.56, 5.55, 5.53, 5.51, 5.5, 5.48, 5.46, 5.46, 5.44, 5.42, 5.41, 5.39, 5.38, 5.37, 5.35, 5.33, 5.32, 5.31, 5.29, 5.28, 5.27, 5.25, 5.24, 5.22, 5.21, 5.2, 5.18, 5.17, 5.16, 5.14, 5.13, 5.12, 5.1, 5.09, 5.08, 5.07, 5.2, 5.2, 5.19, 5.19, 5.18, 5.17, 5.16, 5.16, 5.14, 5.13, 5.12, 5.11, 5.09, 5.09, 5.07, 5.06, 5.05, 5.03, 5.02, 5.01, 5.0, 4.98, 4.98, 4.96, 4.95, 4.95, 4.94, 4.93, 4.92, 4.92, 4.91, 4.91, 4.9, 4.9, 4.9, 4.9, 4.9, 4.9, 4.91, 4.91, 4.92, 4.92, 4.93, 4.94, 4.95, 4.96, 4.96, 4.97, 4.99, 5.0, 5.01, 5.02, 5.03, 5.05, 5.06, 5.07, 5.08, 5.1, 5.11, 5.12, 5.14, 5.14, 5.15, 5.17, 5.17, 5.18, 5.19, 5.19, 5.2, 5.2, 5.21, 5.21, 5.21, 5.21, 5.21, 5.2, 5.2, 5.2, 5.19, 5.18, 5.17, 5.16, 5.16, 5.15, 5.13, 5.13, 5.11, 5.1, 5.09, 5.08, 5.06, 5.05, 5.04, 5.02, 5.02, 5.0, 4.99, 4.98, 4.97, 4.96, 4.95, 4.94, 4.93, 4.93, 4.92, 4.91, 4.91, 4.91, 4.9, 4.9, 4.9, 4.9, 4.9, 4.91, 4.91, 4.91, 4.92, 4.93, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99, 5.0, 5.02, 5.03, 5.04, 5.06, 5.06, 5.08, 5.09, 5.1, 5.12, 5.13, 5.14, 5.15, 5.16, 5.17, 5.18, 5.19, 5.19, 5.2, 5.2, 5.2, 5.21, 5.21, 5.21, 5.21, 5.2, 5.2, 5.2, 5.19, 5.19, 5.18, 5.17, 5.16, 5.15, 5.14, 5.13, 5.12, 5.1, 5.1, 5.08, 5.07, 5.06, 5.04, 5.03, 5.06, 5.08, 5.1, 5.11, 5.13, 5.14, 5.15, 5.17, 5.19, 5.2, 5.22, 5.24, 5.25, 5.27, 5.29, 5.3, 5.32, 5.34, 5.35, 5.37, 5.39, 5.4, 5.43, 5.45, 5.46, 5.48, 5.5, 5.51, 5.53, 5.56, 5.57, 5.59, 5.61, 5.62, 5.65, 5.67, 5.68, 5.7, 5.73, 5.74, 5.76, 5.79, 5.8, 5.82, 5.85, 5.86, 5.89, 5.91, 5.92, 5.95, 5.97, 5.99, 6.01, 6.04, 6.05, 6.08, 6.11, 6.12, 6.15, 6.17, 6.19, 6.21, 6.24, 6.26, 6.28, 6.31, 6.33, 6.36, 6.39, 6.4, 6.43];
+    const heartrates = [100, 101, 101, 104, 102, 105, 105, 106, 106, 106, 107, 107, 110, 108, 111, 111, 112, 112, 112, 113, 113, 116, 114, 117, 117, 118, 118, 118, 119, 119, 122, 120, 123, 123, 124, 124, 124, 125, 125, 128, 126, 129, 129, 130, 130, 130, 131, 131, 134, 132, 135, 135, 136, 136, 136, 137, 137, 140, 138, 141, 138, 138, 137, 135, 136, 135, 137, 135, 137, 136, 137, 137, 137, 138, 138, 141, 140, 143, 143, 144, 144, 144, 145, 144, 146, 144, 146, 145, 146, 144, 143, 143, 141, 143, 140, 141, 139, 140, 138, 136, 137, 135, 137, 135, 137, 136, 137, 136, 136, 137, 137, 140, 138, 141, 141, 143, 143, 143, 144, 144, 146, 144, 146, 145, 146, 145, 144, 144, 143, 144, 141, 142, 140, 141, 139, 137, 138, 136, 137, 135, 137, 136, 137, 136, 135, 136, 136, 139, 137, 140, 140, 141, 141, 141, 143, 143, 145, 144, 146, 145, 146, 145, 144, 145, 144, 145, 143, 144, 142, 142, 140, 138, 139, 137, 138, 136, 137, 136, 137, 136, 135, 136, 135, 138, 136, 139, 138, 140, 140, 140, 141, 141, 144, 143, 145, 145, 146, 145, 144, 145, 144, 146, 144, 145, 143, 144, 142, 140, 140, 138, 139, 137, 138, 136, 137, 136, 135, 136, 135, 137, 135, 138, 137, 139, 139, 139, 140, 140, 143, 141, 144, 144, 145, 145, 144, 145, 144, 146, 144, 146, 144, 145, 143, 141, 142, 140, 141, 138, 139, 137, 138, 136, 135, 136, 135, 137, 135, 137, 136, 138, 137, 137, 139, 139, 142, 140, 143, 143, 144, 144, 144, 141, 142, 146, 144, 148, 149, 150, 151, 152, 153, 154, 158, 156, 160, 161, 162, 163, 164, 165, 166, 170, 168, 172, 173, 174, 175, 176, 177, 178];
+
+    const ctx = document.getElementById('runChart').getContext('2d');
+    
+    const datasets = [
+      {
+        label: 'Elevation (m)',
+        data: elevations,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        fill: true,
+        yAxisID: 'yElevation',
+        tension: 0.3,
+        pointRadius: 0
+      },
+      {
+        label: 'Pace (min/km)',
+        data: paces,
+        borderColor: '#f59e0b',
+        yAxisID: 'yPace',
+        tension: 0.4,
+        pointRadius: 0
+      }
+    ];
+
+    if (heartrates && heartrates.length > 0) {
+      datasets.push({
+        label: 'Heart Rate (bpm)',
+        data: heartrates,
+        borderColor: '#ec4899',
+        yAxisID: 'yHR',
+        tension: 0.3,
+        pointRadius: 0
+      });
+    }
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: distances,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Distance (km)',
+              color: '#94a3b8'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          },
+          yElevation: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Elevation (m)',
+              color: '#10b981'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: '#94a3b8'
+            }
+          },
+          yPace: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            reverse: true, // Pace scale is inverted (lower pace = faster)
+            title: {
+              display: true,
+              text: 'Pace (min/km)',
+              color: '#f59e0b'
+            },
+            grid: {
+              drawOnChartArea: false // Only show grid for left axis
+            },
+            ticks: {
+              color: '#94a3b8',
+              callback: function(value) {
+                const mins = Math.floor(value);
+                const secs = Math.round((value - mins) * 60);
+                return mins + ':' + (secs < 10 ? '0' : '') + secs;
+              }
+            }
+          },
+          ...(heartrates && heartrates.length > 0 ? {
+            yHR: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              title: {
+                display: true,
+                text: 'Heart Rate (bpm)',
+                color: '#ec4899'
+              },
+              grid: {
+                drawOnChartArea: false
+              },
+              ticks: {
+                color: '#94a3b8'
+              }
+            }
+          } : {})
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#f8fafc',
+              font: {
+                family: 'Plus Jakarta Sans'
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.dataset.yAxisID === 'yPace') {
+                  const mins = Math.floor(context.parsed.y);
+                  const secs = Math.round((context.parsed.y - mins) * 60);
+                  label += mins + ':' + (secs < 10 ? '0' : '') + secs + ' /km';
+                } else {
+                  label += Math.round(context.parsed.y * 10) / 10;
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

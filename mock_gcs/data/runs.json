@@ -1,0 +1,28 @@
+[
+  {
+    "id": 100000002,
+    "name": "Sleek Glassmorphic Morning Run",
+    "date": "2026-06-12",
+    "distance_km": 6.236,
+    "elapsed_time_seconds": 1497,
+    "moving_time_seconds": 1497,
+    "avg_pace_min_km": 4.0,
+    "total_elevation_gain_m": 63.7,
+    "pacing_pattern": "Even Pacing",
+    "avg_heartrate": 138.4,
+    "report_url": "reports/2026-06-12_run_100000002.html"
+  },
+  {
+    "id": 100000001,
+    "name": "Tempo Session along the Seine",
+    "date": "2026-06-11",
+    "distance_km": 6.236,
+    "elapsed_time_seconds": 1497,
+    "moving_time_seconds": 1497,
+    "avg_pace_min_km": 4.0,
+    "total_elevation_gain_m": 63.7,
+    "pacing_pattern": "Even Pacing",
+    "avg_heartrate": 138.4,
+    "report_url": "reports/2026-06-11_run_100000001.html"
+  }
+]
